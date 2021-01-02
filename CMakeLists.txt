@@ -18,7 +18,9 @@ add_executable(
     rave 
     src/main.cpp
     src/glad.cpp
+    src/Shader.cpp
     src/Window.cpp
+    src/Canvas.cpp
 )
 
 set_property(TARGET rave PROPERTY CUDA_ARCHITECTURES 75)
@@ -31,12 +33,9 @@ target_include_directories(rave PUBLIC "C://Program Files/NVIDIA GPU Computing T
 target_link_libraries(rave "C://Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/lib/x64/cuda.lib")
 target_link_libraries(rave "C://Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/lib/x64/cudart.lib")
 
-
 add_custom_command(
     TARGET rave POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E create_symlink              
         ${CMAKE_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:rave>/shaders
     COMMENT "Creating symlink to shader directory" VERBATIM
 )
-
-
