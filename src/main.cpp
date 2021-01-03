@@ -16,13 +16,13 @@ int main()
     static const char* vShader = "shaders/shader.vert";
     static const char* fShader = "shaders/shader.frag";
 
-    Window mainWindow = Window(1366, 768);
+    Window mainWindow = Window(1200, 1200);
     mainWindow.Initialise();
 
     Shader* shader = new Shader();
     shader->CreateFromFiles(vShader, fShader);
 
-    int width = 800, height = 600;
+    int width = 1024, height = 1024;
     Canvas* canvas = new Canvas(width, height, 0.05f);
 
     GLuint texId = canvas->getTextureID();

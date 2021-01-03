@@ -51,14 +51,16 @@ void Simulation::Step()
 
     cudaCreateSurfaceObject(&surface, &resoureDescription);
 
+    int nthread = 32;
 
-    dim3 grids(30, 30);
-    dim3 threads(16, 16);
+
+    dim3 grids(nthread, nthread);
+    dim3 threads(width/nthread, height/nthread);
     kernel<<<grids, threads>>>(surface, counter, width, height);
 
     cudaGraphicsUnmapResources(1, &texRes);
     cudaDestroySurfaceObject(surface);
-    counter += 0.001;
+    counter += 0.01;
 }
 
 Simulation::~Simulation()
