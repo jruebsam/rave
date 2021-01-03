@@ -4,8 +4,6 @@ Canvas::Canvas(const int _width, const int _height, const float border)
 : width(_width), height(_height)
 {
     float size = 1.0f - border;
-    data = new unsigned char[width*height*3];
-
     GLfloat vertices[] = {-size, -size, 0.0f, 0.0f, 0.0f,
                           -size,  size, 0.0f, 0.0f, 1.0f,
                            size, -size, 0.0f, 1.0f, 0.0f,
@@ -33,6 +31,8 @@ Canvas::Canvas(const int _width, const int _height, const float border)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
@@ -48,7 +48,6 @@ void Canvas::Render(){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
 
     glBindBuffer(0, EBO);
@@ -56,9 +55,9 @@ void Canvas::Render(){
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-unsigned char* Canvas::getBufferHandle()
+GLuint Canvas::getTextureID()
 {
-    return data;
+    return texture;
 }
 
 Canvas::~Canvas()
@@ -75,5 +74,4 @@ Canvas::~Canvas()
         glDeleteVertexArrays(1, &VAO);
         VAO = 0;
     }
-    delete[] data;
 }

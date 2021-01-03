@@ -21,6 +21,7 @@ add_executable(
     src/Shader.cpp
     src/Window.cpp
     src/Canvas.cpp
+    src/Simulation.cu
 )
 
 set_property(TARGET rave PROPERTY CUDA_ARCHITECTURES 75)

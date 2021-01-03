@@ -6,12 +6,11 @@ class Canvas
 {
 private:
     GLuint VBO = 0, VAO = 0, EBO = 0, texture;
-    unsigned char* data;
     int width, height;
 public:
     Canvas(const int width, const int height, const float border = 0.05);
     ~Canvas();
     void Canvas::Render();
-    unsigned char* getBufferHandle();
+    GLuint getTextureID();
 };
 
