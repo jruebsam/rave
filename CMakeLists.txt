@@ -21,6 +21,7 @@ add_executable(
     src/Shader.cpp
     src/Window.cpp
     src/Canvas.cpp
+    src/State.cu
     src/Simulation.cu
 )
 

@@ -6,7 +6,15 @@
 #include "Window.h"
 #include "Shader.h"
 #include "Canvas.h"
+
 #include "Simulation.h"
+#include "State.h"
+
+#include "xtensor/xio.hpp"
+#include "xtensor/xarray.hpp"
+#include "xtensor/xview.hpp"
+#include <iostream>
+
 
 int main()
 {
@@ -19,6 +27,7 @@ int main()
     Window mainWindow = Window(1200, 1200);
     mainWindow.Initialise();
 
+
     Shader* shader = new Shader();
     shader->CreateFromFiles(vShader, fShader);
 
@@ -28,6 +37,10 @@ int main()
     GLuint texId = canvas->getTextureID();
     Simulation* sim = new Simulation(texId, width, height);
 
+
+    xt::view(sim->state.host.T, xt::range(300, 400), xt::range(300, 400)) = 1;
+    xt::view(sim->state.host.T, xt::range(0, 1), xt::range(0, 1)) = 1;
+    std::cout << sim->state.host.T <<std::endl;
 
     while(!mainWindow.getShouldClose()){
         double now = glfwGetTime();

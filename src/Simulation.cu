@@ -30,10 +30,13 @@ __global__ void kernel(cudaSurfaceObject_t surface, double time, double width, d
     surf2Dwrite(data, surface, IDx*sizeof(uchar4), IDy);
 }
 
+Simulation::Simulation(){}
+
 Simulation::Simulation(GLuint &texId_handle, int width_, int height_)
 : width(width_), height(height_)
 {
     cudaGraphicsGLRegisterImage(&texRes, texId_handle, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsSurfaceLoadStore);
+    state = State(width, height);
 }
 
 
