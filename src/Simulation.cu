@@ -1,7 +1,7 @@
 #include "Simulation.h"
 #include <stdint.h>
 
-__global__ void kernel(cudaSurfaceObject_t surface, double time, double width, double height)
+__global__ void kernel(cudaSurfaceObject_t surface, float* X, double time, double width, double height)
 {
 
     const unsigned int IDx = blockIdx.x * blockDim.x +  threadIdx.x;
@@ -10,7 +10,8 @@ __global__ void kernel(cudaSurfaceObject_t surface, double time, double width, d
     float x = IDx/width;
     float y = IDy/height;
 
-    float v = cos(10*x)*sin(10*y)*cos(time)*0.5 + 0.5;
+    float xval = X[IDx + IDy*(int) width];
+    float v = cos(10*x)*sin(10*y)*cos(time)*0.5*xval + 0.5;
     uint8_t r, g, b; 
 
     float a=(1-v)/0.25;	
@@ -59,7 +60,8 @@ void Simulation::Step()
 
     dim3 grids(nthread, nthread);
     dim3 threads(width/nthread, height/nthread);
-    kernel<<<grids, threads>>>(surface, counter, width, height);
+
+    kernel<<<grids, threads>>>(surface, state.T.device, counter, width, height);
 
     cudaGraphicsUnmapResources(1, &texRes);
     cudaDestroySurfaceObject(surface);

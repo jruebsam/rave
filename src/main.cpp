@@ -10,10 +10,6 @@
 #include "Simulation.h"
 #include "State.h"
 
-#include "xtensor/xio.hpp"
-#include "xtensor/xarray.hpp"
-#include "xtensor/xview.hpp"
-#include <iostream>
 
 
 int main()
@@ -37,10 +33,13 @@ int main()
     GLuint texId = canvas->getTextureID();
     Simulation* sim = new Simulation(texId, width, height);
 
+    for(int i=300; i<600; i++){
+        for(int j=300; j<600; j++){
+            sim->state.T.host[j + 1024*i] = 1.0f;
+        }
+    }
+    sim->state.toDevice();
 
-    xt::view(sim->state.host.T, xt::range(300, 400), xt::range(300, 400)) = 1;
-    xt::view(sim->state.host.T, xt::range(0, 1), xt::range(0, 1)) = 1;
-    std::cout << sim->state.host.T <<std::endl;
 
     while(!mainWindow.getShouldClose()){
         double now = glfwGetTime();

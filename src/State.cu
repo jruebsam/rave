@@ -1,26 +1,65 @@
 #include "State.h"
+#include "cuda_helpers.h"
 
-State::State(){}
-
-State::State(int nx_, int ny_)
-:nx(nx_), ny(ny_)
+DataField::DataField()
 {
-    host.T = xt::zeros<float>({nx, ny});
+    host   = nullptr;
+    device = nullptr; 
+    buffer = nullptr;
+    refCount = nullptr;
+    nx=0;
+    ny=0;
+};
 
-    cudaMalloc(&(current.T), nx*ny*sizeof(float)); 
-    cudaMalloc(&(target.T), nx*ny*sizeof(float)); 
-}
-
-void State::toDevice(){
-    cudaMemcpy(&(host.T), current.T, nx*ny*sizeof(float), cudaMemcpyHostToDevice);
-}
-
-void State::toHost(){
-    cudaMemcpy(current.T, &(host.T), nx*ny*sizeof(float), cudaMemcpyHostToDevice);
-}
-
-State::~State()
+DataField::DataField(int nx_, int ny_) : nx{nx_}, ny{ny_}
 {
-    cudaFree(current.T);
-    cudaFree(target.T);
-}
+
+    host = new float[nx*ny]();
+    CUDACHECK(cudaMalloc(&(device), nx*ny*sizeof(float))); 
+    CUDACHECK(cudaMalloc(&(buffer), nx*ny*sizeof(float))); 
+
+    refCount = new int(0);
+    *refCount += 1;
+};
+
+DataField::DataField(const DataField& other)
+{
+    if(this != &other){
+        this->host = other.host;
+        this->device = other.device;
+        this->buffer = other.buffer;
+        this->nx = other.nx;
+        this->ny = other.ny;
+        this->refCount = other.refCount;
+        *refCount += 1;
+    }
+};
+
+DataField& DataField::operator=(DataField other){
+    swap(*this, other); 
+    return *this; 
+};
+
+DataField::~DataField(){
+    if (refCount != nullptr)
+    {
+        if (*refCount == 1) {
+            delete[] this->host;
+            delete refCount;
+
+            CUDACHECK(cudaFree(this->device));
+            CUDACHECK(cudaFree(this->buffer));
+        } else {
+            *refCount -= 1;
+        }
+
+        this->host = nullptr;
+        this->device = nullptr;
+        this->buffer = nullptr;
+        this->refCount = nullptr;
+    }
+};
+
+void DataField::toDevice(){
+    CUDACHECK(cudaMemcpy(device, host, nx*ny*sizeof(float), cudaMemcpyHostToDevice));
+};
