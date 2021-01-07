@@ -17,6 +17,8 @@ DataField::DataField(int nx_, int ny_) : nx{nx_}, ny{ny_}
     host = new float[nx*ny]();
     CUDACHECK(cudaMalloc(&(device), nx*ny*sizeof(float))); 
     CUDACHECK(cudaMalloc(&(buffer), nx*ny*sizeof(float))); 
+    CUDACHECK(cudaMemcpy(device, host, nx*ny*sizeof(float), cudaMemcpyHostToDevice));
+    CUDACHECK(cudaMemcpy(buffer, host, nx*ny*sizeof(float), cudaMemcpyHostToDevice));
 
     refCount = new int(0);
     *refCount += 1;

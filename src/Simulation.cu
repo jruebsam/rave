@@ -1,7 +1,28 @@
 #include "Simulation.h"
 #include <stdint.h>
 
-__global__ void kernel(cudaSurfaceObject_t surface, float* X, double time, double width, double height)
+__global__ void solver(float* input, float* output, int nx, int ny, float dt)
+{
+    const unsigned int IDx = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int IDy = blockIdx.y * blockDim.y + threadIdx.y;
+
+    float * temp = input;
+
+    int i = IDx*ny + IDy;
+    int north = i + nx;
+    int south = i - nx;
+    int east = i + 1;
+    int west = i - 1;
+
+    float dtdx2 =  dt/(0.01*0.01);
+
+
+    if (IDx > 0 &&  IDx < 1023 && IDy > 0 && IDy < 1023){
+        output[i] = temp[i] + dtdx2*((temp[north] -2*temp[i] + temp[south])+ (temp[east] - 2*temp[i] + temp[west]));
+    }
+}
+
+__global__ void kernel(cudaSurfaceObject_t surface, float* input, double time, double width, double height)
 {
 
     const unsigned int IDx = blockIdx.x * blockDim.x +  threadIdx.x;
@@ -10,8 +31,9 @@ __global__ void kernel(cudaSurfaceObject_t surface, float* X, double time, doubl
     float x = IDx/width;
     float y = IDy/height;
 
-    float xval = X[IDx + IDy*(int) width];
-    float v = cos(10*x)*sin(10*y)*cos(time)*0.5*xval + 0.5;
+    float v = input[IDx + IDy*(int) width];
+    //float v = cos(10*x)*sin(10*y)*cos(time)*0.5 + xval + 0.5;
+
     uint8_t r, g, b; 
 
     float a=(1-v)/0.25;	
@@ -58,9 +80,11 @@ void Simulation::Step()
     int nthread = 32;
 
 
-    dim3 grids(nthread, nthread);
-    dim3 threads(width/nthread, height/nthread);
+    dim3 threads(nthread, nthread);
+    dim3 grids(width/nthread, height/nthread);
 
+    solver<<<grids, threads>>>(state.T.device, state.T.buffer, width, height, 0.00001);
+    solver<<<grids, threads>>>(state.T.buffer, state.T.device, width, height, 0.00001);
     kernel<<<grids, threads>>>(surface, state.T.device, counter, width, height);
 
     cudaGraphicsUnmapResources(1, &texRes);
