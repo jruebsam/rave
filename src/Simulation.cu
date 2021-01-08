@@ -1,37 +1,74 @@
 #include "Simulation.h"
 #include <stdint.h>
 
-__global__ void solver(float* input, float* output, int nx, int ny, float dt)
+#define DERIV_X(v) (1/(2*dx)*(v[East]  - v[West]))
+#define DERIV_Z(v) (1/(2*dz)*(v[North] - v[South]))
+
+#define LAPLACE(v) (inv_dx_quad*(v[East]  -2*v[Point] + v[West] )\
+                   +inv_dz_quad*(v[North] -2*v[Point] + v[South]))
+
+#define ADVECT(v)((axp*(v[Point] - v[West])/dx  + axm*(v[East]  - v[Point])/dx \
+                 + azp*(v[Point] - v[South])/dx + azm*(v[North] - v[Point])/dx))
+
+
+__global__ void solver
+(
+    float* in_T,
+    float* out_T,
+    float* in_vx,
+    float* out_vx,
+    float* in_vz,
+    float* out_vz,
+    float* in_rho,
+    float* out_rho,
+    int nx, 
+    int ny, 
+    float dt)
 {
     const unsigned int IDx = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int IDy = blockIdx.y * blockDim.y + threadIdx.y;
 
-    float * temp = input;
+    int Point = IDx*ny + IDy;
+    int North = Point + nx;
+    int South = Point - nx;
+    int East = Point + 1;
+    int West = Point - 1;
 
-    int i = IDx*ny + IDy;
-    int north = i + nx;
-    int south = i - nx;
-    int east = i + 1;
-    int west = i - 1;
+    float dx = 1/512.,  dz = 1/512.;
+    float c2 = 50000000;
+    float Pr = 0.7;
+    float Ra = 500000000;
+    float inv_dx_quad = 1./(dx*dx);
+    float inv_dz_quad = 1./(dz*dz);
 
-    float dtdx2 =  dt/(0.01*0.01);
 
 
-    if (IDx > 0 &&  IDx < 1023 && IDy > 0 && IDy < 1023){
-        output[i] = temp[i] + dtdx2*((temp[north] -2*temp[i] + temp[south])+ (temp[east] - 2*temp[i] + temp[west]));
+    if (IDx > 1 &&  IDx < nx - 1 && IDy > 1 && IDy < ny - 1){
+        float axp = max(in_vx[Point], 0.0f);
+        float axm = min(in_vx[Point], 0.0f);
+        float azp = max(in_vz[Point], 0.0f);
+        float azm = min(in_vz[Point], 0.0f);
+
+
+        out_rho[Point] = in_rho[Point] + dt*(-DERIV_X(in_vx) - DERIV_Z(in_vz));
+        out_vx[Point]  = in_vx[Point]  + dt*(-ADVECT(in_vx) - c2*DERIV_X(in_rho) + Pr*LAPLACE(in_vx));
+        out_vz[Point]  = in_vz[Point]  + dt*(-ADVECT(in_vz) - c2*DERIV_Z(in_rho) + Pr*LAPLACE(in_vz) + Pr*Ra*in_T[Point]);
+        out_T[Point]   = in_T[Point]   + dt*(-ADVECT(in_T) + LAPLACE(in_T) + in_vz[Point]);
     }
 }
 
-__global__ void kernel(cudaSurfaceObject_t surface, float* input, double time, double width, double height)
+
+__global__ void kernel(cudaSurfaceObject_t surface, float* input, int nx, int ny)
 {
 
     const unsigned int IDx = blockIdx.x * blockDim.x +  threadIdx.x;
     const unsigned int IDy = blockIdx.y * blockDim.y + threadIdx.y;
 
-    float x = IDx/width;
-    float y = IDy/height;
+    float x = IDx/(float)nx;
+    float y = IDy/(float)ny;
 
-    float v = input[IDx + IDy*(int) width];
+
+    float v = input[IDx + IDy*(int) nx] + (1- y);
     //float v = cos(10*x)*sin(10*y)*cos(time)*0.5 + xval + 0.5;
 
     uint8_t r, g, b; 
@@ -77,19 +114,36 @@ void Simulation::Step()
 
     cudaCreateSurfaceObject(&surface, &resoureDescription);
 
-    int nthread = 32;
-
+    int nthread = 16;
 
     dim3 threads(nthread, nthread);
     dim3 grids(width/nthread, height/nthread);
 
-    solver<<<grids, threads>>>(state.T.device, state.T.buffer, width, height, 0.00001);
-    solver<<<grids, threads>>>(state.T.buffer, state.T.device, width, height, 0.00001);
-    kernel<<<grids, threads>>>(surface, state.T.device, counter, width, height);
+    float dt = 0.00000001;
+
+    dim3 st(nthread, 1);
+    dim3 sg(width/nthread, 1);
+
+    for(int i=0; i<1; i++){
+        solver<<<grids, threads>>> (
+            state.T.device, state.T.buffer,
+            state.vx.device, state.vx.buffer,
+            state.vz.device, state.vz.buffer,
+            state.rho.device, state.rho.buffer, width, height, dt
+        );
+
+        solver<<<grids, threads>>> (
+            state.T.buffer, state.T.device,
+            state.vx.buffer, state.vx.device,
+            state.vz.buffer, state.vz.device,
+            state.rho.buffer, state.rho.device, width, height, dt
+        );
+    }
+        
+    kernel<<<grids, threads>>>(surface, state.T.device, width, height);
 
     cudaGraphicsUnmapResources(1, &texRes);
     cudaDestroySurfaceObject(surface);
-    counter += 0.01;
 }
 
 Simulation::~Simulation()

@@ -2,6 +2,9 @@
 
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <stdlib.h>     
+
+
 
 #include "Window.h"
 #include "Shader.h"
@@ -16,6 +19,7 @@ int main()
 {
     double deltaTime = 0.0;
     double lastTime = 0.0;
+    srand(42);
 
     static const char* vShader = "shaders/shader.vert";
     static const char* fShader = "shaders/shader.frag";
@@ -27,15 +31,16 @@ int main()
     Shader* shader = new Shader();
     shader->CreateFromFiles(vShader, fShader);
 
-    int width = 1024, height = 1024;
-    Canvas* canvas = new Canvas(width, height, 0.05f);
+    int nx = 512, ny = 512;
+    Canvas* canvas = new Canvas(nx, ny, 0.05f);
 
     GLuint texId = canvas->getTextureID();
-    Simulation* sim = new Simulation(texId, width, height);
+    Simulation* sim = new Simulation(texId, nx, ny);
 
-    for(int i=300; i<600; i++){
-        for(int j=300; j<600; j++){
-            sim->state.T.host[j + 1024*i] = 1.0f;
+    for(int i=100; i< nx - 100; i++){
+        for(int j=100; j< ny - 100; j++){
+            float noise = (rand() % 100)/100. - 0.5;
+            sim->state.T.host[j + nx*i] += noise + (j/nx- 0.5);
         }
     }
     sim->state.toDevice();

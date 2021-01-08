@@ -35,9 +35,13 @@ struct DataField {
 };
 
 struct State {
+    DataField vx;
+    DataField vz;
     DataField T;
+    DataField rho;
+
     int nx, ny;
     State(){};
-    State(int nx_, int ny_): nx{nx_}, ny{ny_}, T(nx_, ny_){};
-    void toDevice(){T.toDevice();}
+    State(int nx_, int ny_): nx{nx_}, ny{ny_}, T(nx_, ny_), vx(nx_, ny_),  vz(nx_, ny_), rho(nx_, ny_){};
+    void toDevice(){T.toDevice(); vx.toDevice(); vz.toDevice(); rho.toDevice();}
 };

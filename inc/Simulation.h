@@ -9,8 +9,6 @@
 class Simulation
 {
 private:
-    double counter = 0.0;
-
     GLuint texId;
     cudaGraphicsResource_t texRes;
     cudaArray_t data;
