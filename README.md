@@ -10,7 +10,7 @@ expensive reloading from global GPU memory.
 # Installation
 
 Dependencies are managed with conan, which can be installed by the python package manager.
-For building this project it is necessary to define the proper CUDA paths and architecture in the `CMakeLists.txt` and build from within an `build` folderwith:
+For building this project it is necessary to define the proper CUDA paths and architecture in the `CMakeLists.txt` and build from within an `build` folder with:
 
     conan install .. 
     cmake .. 
