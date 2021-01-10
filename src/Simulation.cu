@@ -1,6 +1,8 @@
 #include "Simulation.h"
 #include <stdint.h>
 
+#include "colormap.cu"
+
 #define DERIV_X(v) (1/(2*dx)*(v[East]  - v[West]))
 #define DERIV_Z(v) (1/(2*dz)*(v[North] - v[South]))
 
@@ -66,27 +68,13 @@ __global__ void kernel(cudaSurfaceObject_t surface, float* input, int nx, int ny
 
 
     float y = IDy/(float)ny;
-
     float v = input[IDx + IDy*nx] + (1- y);
-
-    /*
-    float x = IDx/(float)nx;
-    float v = cos(10*x)*sin(10*y)*cos(time)*0.5 + xval + 0.5;*/
 
     uint8_t r, g, b; 
 
-    float a=(1-v)/0.25;	
-    int x0 = floor(a);
-    int y0 = floor(255*(a - x0));
-
-    switch(x0)
-    {
-        case 0: r=255;    g=y0;     b=0;   break;
-        case 1: r=255-y0; g=255;    b=0;   break;
-        case 2: r=0;      g=255;    b=y0;  break;
-        case 3: r=0;      g=255-y0; b=255; break;
-        case 4: r=0;      g=0;      b=255; break;
-    }
+    r = (int) (colormap_red(v)*255);
+    g = (int) (colormap_green(v)*255);
+    b = (int) (colormap_blue(v)*255);
 
     uchar4 data = make_uchar4(r, g, b, 0xff);
     surf2Dwrite(data, surface, IDx*sizeof(uchar4), IDy);
