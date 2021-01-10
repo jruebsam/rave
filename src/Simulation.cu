@@ -8,7 +8,7 @@
                    +inv_dz_quad*(v[North] -2*v[Point] + v[South]))
 
 #define ADVECT(v)((axp*(v[Point] - v[West])/dx  + axm*(v[East]  - v[Point])/dx \
-                 + azp*(v[Point] - v[South])/dx + azm*(v[North] - v[Point])/dx))
+                 + azp*(v[Point] - v[South])/dz + azm*(v[North] - v[Point])/dz))
 
 
 __global__ void solver
@@ -28,16 +28,16 @@ __global__ void solver
     const unsigned int IDx = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int IDy = blockIdx.y * blockDim.y + threadIdx.y;
 
-    int Point = IDx*ny + IDy;
+    int Point = IDy*nx + IDx;
     int North = Point + nx;
     int South = Point - nx;
     int East = Point + 1;
     int West = Point - 1;
 
-    float dx = 1/512.,  dz = 1/512.;
-    float c2 = 50000000;
+    float dx = 2./nx,  dz = 1./ny;
+    float c2 = 10000000;
     float Pr = 0.7;
-    float Ra = 500000000;
+    float Ra = 100000000;
     float inv_dx_quad = 1./(dx*dx);
     float inv_dz_quad = 1./(dz*dz);
 
@@ -64,12 +64,14 @@ __global__ void kernel(cudaSurfaceObject_t surface, float* input, int nx, int ny
     const unsigned int IDx = blockIdx.x * blockDim.x +  threadIdx.x;
     const unsigned int IDy = blockIdx.y * blockDim.y + threadIdx.y;
 
-    float x = IDx/(float)nx;
+
     float y = IDy/(float)ny;
 
+    float v = input[IDx + IDy*nx] + (1- y);
 
-    float v = input[IDx + IDy*(int) nx] + (1- y);
-    //float v = cos(10*x)*sin(10*y)*cos(time)*0.5 + xval + 0.5;
+    /*
+    float x = IDx/(float)nx;
+    float v = cos(10*x)*sin(10*y)*cos(time)*0.5 + xval + 0.5;*/
 
     uint8_t r, g, b; 
 
@@ -114,31 +116,26 @@ void Simulation::Step()
 
     cudaCreateSurfaceObject(&surface, &resoureDescription);
 
-    int nthread = 16;
+    int nthread = 32;
 
     dim3 threads(nthread, nthread);
     dim3 grids(width/nthread, height/nthread);
 
-    float dt = 0.00000001;
+    float dt = 0.0000001;
 
-    dim3 st(nthread, 1);
-    dim3 sg(width/nthread, 1);
+    solver<<<grids, threads>>> (
+        state.T.device, state.T.buffer,
+        state.vx.device, state.vx.buffer,
+        state.vz.device, state.vz.buffer,
+        state.rho.device, state.rho.buffer, width, height, dt
+    );
 
-    for(int i=0; i<1; i++){
-        solver<<<grids, threads>>> (
-            state.T.device, state.T.buffer,
-            state.vx.device, state.vx.buffer,
-            state.vz.device, state.vz.buffer,
-            state.rho.device, state.rho.buffer, width, height, dt
-        );
-
-        solver<<<grids, threads>>> (
-            state.T.buffer, state.T.device,
-            state.vx.buffer, state.vx.device,
-            state.vz.buffer, state.vz.device,
-            state.rho.buffer, state.rho.device, width, height, dt
-        );
-    }
+    solver<<<grids, threads>>> (
+        state.T.buffer, state.T.device,
+        state.vx.buffer, state.vx.device,
+        state.vz.buffer, state.vz.device,
+        state.rho.buffer, state.rho.device, width, height, dt
+    );
         
     kernel<<<grids, threads>>>(surface, state.T.device, width, height);
 

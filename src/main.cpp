@@ -4,8 +4,6 @@
 #include <iostream>
 #include <stdlib.h>     
 
-
-
 #include "Window.h"
 #include "Shader.h"
 #include "Canvas.h"
@@ -24,27 +22,27 @@ int main()
     static const char* vShader = "shaders/shader.vert";
     static const char* fShader = "shaders/shader.frag";
 
-    Window mainWindow = Window(1200, 1200);
+    Window mainWindow = Window(1600, 800);
     mainWindow.Initialise();
 
 
     Shader* shader = new Shader();
     shader->CreateFromFiles(vShader, fShader);
 
-    int nx = 512, ny = 512;
+    int nx = 1024, ny = 512;
     Canvas* canvas = new Canvas(nx, ny, 0.05f);
+
 
     GLuint texId = canvas->getTextureID();
     Simulation* sim = new Simulation(texId, nx, ny);
 
-    for(int i=100; i< nx - 100; i++){
-        for(int j=100; j< ny - 100; j++){
+    for(int i=100; i< ny - 100; i++){
+        for(int j=100; j< nx - 100; j++){
             float noise = (rand() % 100)/100. - 0.5;
-            sim->state.T.host[j + nx*i] += noise + (j/nx- 0.5);
+            sim->state.T.host[j + nx*i] += noise + (i/ny- 0.5);
         }
     }
     sim->state.toDevice();
-
 
     while(!mainWindow.getShouldClose()){
         double now = glfwGetTime();
