@@ -25,15 +25,14 @@ add_executable(
     src/Simulation.cu
 )
 
-set_property(TARGET rave PROPERTY CUDA_ARCHITECTURES 75)
+set_property(TARGET rave PROPERTY CUDA_ARCHITECTURES 86)
 set_property(TARGET rave PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 target_include_directories(rave PUBLIC inc)
 target_link_libraries(rave ${CONAN_LIBS})
 
-target_include_directories(rave PUBLIC "C://Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/include")
-target_link_libraries(rave "C://Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/lib/x64/cuda.lib")
-target_link_libraries(rave "C://Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/lib/x64/cudart.lib")
+target_include_directories(rave PUBLIC "/usr/local/cuda-11.4/include")
+target_link_libraries(rave "/usr/local/cuda-11.4/lib64/libcudart.so")
 
 add_custom_command(
     TARGET rave POST_BUILD
