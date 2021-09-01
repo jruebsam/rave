@@ -21,7 +21,15 @@ Window::Window(GLint windowWidth, GLint windowHeight) {
     }
 }
 
+void error_callback(int error, const char* description)
+{
+    fprintf(stderr, "Error: %s\n", description);
+}
+
+
 int Window::Initialise() {
+    glfwSetErrorCallback(error_callback);
+
     if (!glfwInit()){
         std::cout << "GLFW initialisation failed!" << std::endl;
         glfwTerminate();
@@ -53,6 +61,7 @@ int Window::Initialise() {
         glfwTerminate();
         return -1;
     }    
+    
     // Setup viewport size
     glViewport(0, 0, bufferWidth, bufferHeight);
     glfwSetWindowUserPointer(mainWindow, this);

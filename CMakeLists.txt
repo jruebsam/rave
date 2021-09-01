@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.28.1)
 project(RaVe LANGUAGES CUDA CXX)
+
+find_package(glfw3 REQUIRED)
+find_package(glm REQUIRED)
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 11)
@@ -10,9 +13,6 @@ if(NOT DEFINED CMAKE_CUDA_STANDARD)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED True)
 endif()
-
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
 
 add_executable(
     rave 
@@ -25,15 +25,12 @@ add_executable(
     src/Simulation.cu
 )
 
-set_property(TARGET rave PROPERTY CUDA_ARCHITECTURES 75)
+target_link_libraries(rave PRIVATE glfw glm)
+target_include_directories(rave PUBLIC inc ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+target_include_directories(rave PUBLIC ${glfw3_INCLUDE_DIRS})
+
+set_property(TARGET rave PROPERTY CUDA_ARCHITECTURES 86)
 set_property(TARGET rave PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-target_include_directories(rave PUBLIC inc)
-target_link_libraries(rave ${CONAN_LIBS})
-
-target_include_directories(rave PUBLIC "C://Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/include")
-target_link_libraries(rave "C://Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/lib/x64/cuda.lib")
-target_link_libraries(rave "C://Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/lib/x64/cudart.lib")
 
 add_custom_command(
     TARGET rave POST_BUILD

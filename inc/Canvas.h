@@ -10,7 +10,7 @@ private:
 public:
     Canvas(const int width, const int height, const float border = 0.05);
     ~Canvas();
-    void Canvas::Render();
+    void Render();
     GLuint getTextureID();
 };
 

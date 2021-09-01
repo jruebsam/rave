@@ -22,10 +22,9 @@ int main()
     static const char* vShader = "shaders/shader.vert";
     static const char* fShader = "shaders/shader.frag";
 
-    Window mainWindow = Window(1600, 800);
+    Window mainWindow = Window(640, 480);
     mainWindow.Initialise();
-
-
+    
     Shader* shader = new Shader();
     shader->CreateFromFiles(vShader, fShader);
 
