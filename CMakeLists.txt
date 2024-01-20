@@ -25,16 +25,9 @@ add_executable(
     src/Simulation.cu
 )
 
-target_link_libraries(rave PRIVATE glfw glm)
+target_link_libraries(rave PRIVATE glfw glm::glm)
 target_include_directories(rave PUBLIC inc ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 target_include_directories(rave PUBLIC ${glfw3_INCLUDE_DIRS})
 
 set_property(TARGET rave PROPERTY CUDA_ARCHITECTURES 86)
 set_property(TARGET rave PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-add_custom_command(
-    TARGET rave POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E create_symlink              
-        ${CMAKE_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:rave>/shaders
-    COMMENT "Creating symlink to shader directory" VERBATIM
-)

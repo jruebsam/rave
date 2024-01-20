@@ -20,16 +20,15 @@ int main()
     static const char *vShader = "shaders/shader.vert";
     static const char *fShader = "shaders/shader.frag";
 
-    int nx = 512 * 4;
-    int ny = 512;
-
-    Window mainWindow = Window(nx / 2, ny / 2);
+    Window mainWindow = Window(256 * 4, 256);
     mainWindow.Initialise();
 
     Shader *shader = new Shader();
     shader->CreateFromFiles(vShader, fShader);
 
+    int nx = 256 * 4., ny = 256;
     Canvas *canvas = new Canvas(nx, ny, 0.05f);
+
     GLuint texId = canvas->getTextureID();
     Simulation *sim = new Simulation(texId, nx, ny);
 
