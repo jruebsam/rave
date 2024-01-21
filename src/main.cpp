@@ -22,21 +22,21 @@ int main()
     static const char* vShader = "shaders/shader.vert";
     static const char* fShader = "shaders/shader.frag";
 
-    Window mainWindow = Window(640, 480);
+    Window mainWindow = Window(256*3, 256);
     mainWindow.Initialise();
     
     Shader* shader = new Shader();
     shader->CreateFromFiles(vShader, fShader);
 
-    int nx = 1024, ny = 512;
+    int nx = 256*3/2, ny = 256/2;
     Canvas* canvas = new Canvas(nx, ny, 0.05f);
 
 
     GLuint texId = canvas->getTextureID();
     Simulation* sim = new Simulation(texId, nx, ny);
 
-    for(int i=100; i< ny - 100; i++){
-        for(int j=100; j< nx - 100; j++){
+    for(int i=10; i< ny - 10; i++){
+        for(int j=10; j< nx - 10; j++){
             float noise = (rand() % 100)/100. - 0.5;
             sim->state.T.host[j + nx*i] += noise + (i/ny- 0.5);
         }

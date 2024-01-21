@@ -36,10 +36,10 @@ __global__ void solver
     int East = Point + 1;
     int West = Point - 1;
 
-    float dx = 2./nx,  dz = 1./ny;
-    float c2 = 10000000;
+    float dx = 3./(nx - 1.),  dz = 1./(ny -1.);
+    float c2 = 1000000;
     float Pr = 0.7;
-    float Ra = 100000000;
+    float Ra = 5000000;
     float inv_dx_quad = 1./(dx*dx);
     float inv_dz_quad = 1./(dz*dz);
 
@@ -109,7 +109,7 @@ void Simulation::Step()
     dim3 threads(nthread, nthread);
     dim3 grids(width/nthread, height/nthread);
 
-    float dt = 0.0000001;
+    float dt = 0.000001;
 
     solver<<<grids, threads>>> (
         state.T.device, state.T.buffer,
